@@ -15,3 +15,4 @@ Ability to customize the command prompt to fit the interpreter needs.
 - [ ] Add keyboard interrupt handler
 - [ ] Add Mandantory `quit` and `help` commands
 - [ ] Add `pre-loop` and `post-loop` functions as a trait, with default implementation
+- [ ] Add colored prompt option

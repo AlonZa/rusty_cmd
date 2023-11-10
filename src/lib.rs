@@ -24,7 +24,7 @@ impl Cmdline {
     /// 
     /// # Examples
     /// 
-    /// ```
+    /// ```no_run
     /// let mut cmd: rusty_cmd::Cmdline = rusty_cmd::Cmdline::new();
     /// cmd.cmdloop();
     /// ```
@@ -67,6 +67,10 @@ impl Cmdline {
     pub fn change_prompt(&mut self, new_prompt: &str) {
         self.prompt = String::from(new_prompt);
     }
+
+    pub fn get_prompt(&self) -> String {
+        self.prompt.clone()
+    }
     
     fn parse_command(&self, command_line: &str) -> (String, String) {
         let mut tokens = command_line.split_whitespace();
@@ -78,4 +82,6 @@ impl Cmdline {
     pub fn add_command(&mut self, name: &str, handler: Box<dyn CommandHandler>) {
         self.commands.insert(name.to_string(), handler);
     }
+
 }
+
