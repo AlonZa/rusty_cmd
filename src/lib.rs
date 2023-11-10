@@ -95,6 +95,9 @@ impl Cmdline {
     }
 
     pub fn add_command(&mut self, name: &str, handler: Box<dyn CommandHandler>) {
+        if self.commands.get(name).is_some() {
+            self.commands.remove(name);
+        }
         self.commands.insert(name.to_string(), handler);
     }
 
