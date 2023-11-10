@@ -1,10 +1,14 @@
 use std::collections::HashMap;
 use std::io::{self, Write};
+use std::process::exit;
 
 const DEFAULT_PROMPT: &str = "rusty_cmd $ ";
 
 pub trait CommandHandler {
     fn execute(&self, line: Option<String>);
+    fn get_help_string(&self) -> String {
+        String::from("No help here...")
+    }
 }
 
 pub struct Cmdline {
@@ -14,10 +18,12 @@ pub struct Cmdline {
 
 impl Cmdline {
     pub fn new() -> Cmdline {
-        Cmdline {
+        let mut cmdline = Cmdline {
             prompt: String::from(DEFAULT_PROMPT),
             commands: HashMap::new(),
-        }
+        };
+        cmdline.add_command("quit", Box::new(DefaultQuitCommand));
+        cmdline
     }
 
     /// Run the main loop of the cmd-like program
@@ -47,6 +53,10 @@ impl Cmdline {
                 handler.execute(line);
             }
             else {
+                if cmd.eq("help") {
+                    self.help_command();
+                    continue;
+                }
                 println!("Unknown command: {}", cmd);
             }
         }
@@ -88,5 +98,30 @@ impl Cmdline {
         self.commands.insert(name.to_string(), handler);
     }
 
+    fn help_command(&self) {
+        if self.commands.get("help").is_none() {
+            println!("help:\n\tThis help menu")
+        }
+        for command in &self.commands {
+            print!("{}:\n", command.0);
+            let lines = command.1.get_help_string();
+            let lines = lines.split('\n');
+            for line in lines {
+                println!("\t{}", line);
+            }
+        }
+    }
+
 }
 
+struct DefaultQuitCommand;
+impl CommandHandler for DefaultQuitCommand {
+    fn execute(&self, _line: Option<String>) {
+        println!("Quitting...");
+        exit(0);
+    }
+
+    fn get_help_string(&self) -> String {
+        String::from("Quit with exit code 0")
+    }
+}
