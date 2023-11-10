@@ -4,7 +4,7 @@ use std::io::{self, Write};
 const DEFAULT_PROMPT: &str = "rusty_cmd $ ";
 
 pub trait CommandHandler {
-    fn execute(&self, line: String);
+    fn execute(&self, line: Option<String>);
 }
 
 pub struct Cmdline {
@@ -72,10 +72,15 @@ impl Cmdline {
         self.prompt.clone()
     }
     
-    fn parse_command(&self, command_line: &str) -> (String, String) {
+    fn parse_command(&self, command_line: &str) -> (String, Option<String>) {
         let mut tokens = command_line.split_whitespace();
-        let cmd = tokens.next().unwrap_or("").to_string();
-        let line = tokens.collect::<Vec<_>>().join(" ");
+        let cmd: String = tokens.next().unwrap_or("").to_string();
+        let line: String = tokens.collect::<Vec<_>>().join(" ");
+        let line: Option<String> = if line.is_empty() {
+            None
+        } else {
+            Some(line)
+        };
         (cmd, line)
     }
 
