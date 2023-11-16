@@ -16,3 +16,5 @@ Ability to customize the command prompt to fit the interpreter needs.
 - [x] Add default `quit` and `help` commands
 - [ ] Add `pre-loop` and `post-loop` functions as a trait, with default implementation
 - [ ] Add colored prompt option
+- [ ] Add history access using the arrow keys
+- [ ] Add Tab completion

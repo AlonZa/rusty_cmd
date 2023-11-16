@@ -13,7 +13,7 @@ pub trait CommandHandler {
 
 pub struct Cmdline {
     prompt: String,
-    commands: HashMap<String, Box<dyn CommandHandler>>
+    commands: HashMap<String, Box<dyn CommandHandler>>,
 }
 
 impl Cmdline {
@@ -35,15 +35,18 @@ impl Cmdline {
     /// cmd.cmdloop();
     /// ```
     pub fn cmdloop(&self) -> Result<(), io::Error> {
+
         loop {
             print!("{}", self.prompt);
             io::stdout().flush()?;
 
             let mut command_line: String = String::new();
+
             io::stdin().read_line(&mut command_line)?;
 
             let command_line: &str = command_line.trim();
             if command_line.is_empty() {
+                println!("");
                 continue;
             }
             
@@ -61,6 +64,8 @@ impl Cmdline {
             }
         }
     }
+
+    
 
     /// Change the prompt of the cmd-like program
     /// 
