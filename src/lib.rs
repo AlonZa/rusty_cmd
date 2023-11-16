@@ -27,9 +27,9 @@ impl Cmdline {
     }
 
     /// Run the main loop of the cmd-like program
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```no_run
     /// let mut cmd: rusty_cmd::Cmdline = rusty_cmd::Cmdline::new();
     /// cmd.cmdloop();
@@ -49,7 +49,7 @@ impl Cmdline {
                 println!("");
                 continue;
             }
-            
+
             let (cmd, line) = self.parse_command(&command_line);
             let cmd = cmd.to_string();
             if let Some(handler) = self.commands.get(&cmd) {
@@ -68,13 +68,13 @@ impl Cmdline {
     
 
     /// Change the prompt of the cmd-like program
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * new_prompt - A string slice that holds the new prompt.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// let mut cmd: rusty_cmd::Cmdline = rusty_cmd::Cmdline::new();
     /// cmd.change_prompt("[My New Prompt] # ");
@@ -83,10 +83,10 @@ impl Cmdline {
         self.prompt = String::from(new_prompt);
     }
 
-    pub fn get_prompt(&self) -> String {
-        self.prompt.clone()
+    pub fn get_prompt<'a>(&'a self) -> &'a String {
+        &self.prompt
     }
-    
+
     fn parse_command(&self, command_line: &str) -> (String, Option<String>) {
         let mut tokens = command_line.split_whitespace();
         let cmd: String = tokens.next().unwrap_or("").to_string();
