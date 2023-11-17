@@ -6,20 +6,20 @@ const DEFAULT_PROMPT: &str = "rusty_cmd $ ";
 
 pub trait CommandHandler {
     fn execute(&self, line: Option<String>);
-    fn get_help_string(&self) -> String {
-        String::from("No help here...")
+    fn get_help_string<'a>(&self) -> &'a str {
+        "No help here..."
     }
 }
 
-pub struct Cmdline {
-    prompt: String,
-    commands: HashMap<String, Box<dyn CommandHandler>>,
+pub struct Cmdline<'a> {
+    prompt: &'a str,
+    commands: HashMap<&'a str, Box<dyn CommandHandler>>,
 }
 
-impl Cmdline {
-    pub fn new() -> Cmdline {
+impl<'a> Cmdline<'a> {
+    pub fn new() -> Cmdline<'a> {
         let mut cmdline = Cmdline {
-            prompt: String::from(DEFAULT_PROMPT),
+            prompt: DEFAULT_PROMPT,
             commands: HashMap::new(),
         };
         cmdline.add_command("quit", Box::new(DefaultQuitCommand));
@@ -27,9 +27,9 @@ impl Cmdline {
     }
 
     /// Run the main loop of the cmd-like program
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```no_run
     /// let mut cmd: rusty_cmd::Cmdline = rusty_cmd::Cmdline::new();
     /// cmd.cmdloop();
@@ -49,10 +49,9 @@ impl Cmdline {
                 println!("");
                 continue;
             }
-            
+
             let (cmd, line) = self.parse_command(&command_line);
-            let cmd = cmd.to_string();
-            if let Some(handler) = self.commands.get(&cmd) {
+            if let Some(handler) = self.commands.get(cmd) {
                 handler.execute(line);
             }
             else {
@@ -65,31 +64,31 @@ impl Cmdline {
         }
     }
 
-    
+
 
     /// Change the prompt of the cmd-like program
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * new_prompt - A string slice that holds the new prompt.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// let mut cmd: rusty_cmd::Cmdline = rusty_cmd::Cmdline::new();
     /// cmd.change_prompt("[My New Prompt] # ");
     /// ```
-    pub fn change_prompt(&mut self, new_prompt: &str) {
-        self.prompt = String::from(new_prompt);
+    pub fn change_prompt(&mut self, new_prompt: &'a str) {
+        self.prompt = new_prompt;
     }
 
-    pub fn get_prompt(&self) -> String {
-        self.prompt.clone()
+    pub fn get_prompt(&self) -> &'a str {
+        self.prompt
     }
-    
-    fn parse_command(&self, command_line: &str) -> (String, Option<String>) {
+
+    fn parse_command(&self, command_line: &'a str) -> (&'a str, Option<String>) {
         let mut tokens = command_line.split_whitespace();
-        let cmd: String = tokens.next().unwrap_or("").to_string();
+        let cmd: &str = tokens.next().unwrap_or("");
         let line: String = tokens.collect::<Vec<_>>().join(" ");
         let line: Option<String> = if line.is_empty() {
             None
@@ -99,11 +98,11 @@ impl Cmdline {
         (cmd, line)
     }
 
-    pub fn add_command(&mut self, name: &str, handler: Box<dyn CommandHandler>) {
+    pub fn add_command(&mut self, name: &'a str, handler: Box<dyn CommandHandler>) {
         if self.commands.get(name).is_some() {
             self.commands.remove(name);
         }
-        self.commands.insert(name.to_string(), handler);
+        self.commands.insert(name, handler);
     }
 
     fn help_command(&self) {
@@ -129,7 +128,7 @@ impl CommandHandler for DefaultQuitCommand {
         exit(0);
     }
 
-    fn get_help_string(&self) -> String {
-        String::from("Quit with exit code 0")
+    fn get_help_string<'a>(&self) -> &'a str {
+        "Quit with exit code 0"
     }
 }
