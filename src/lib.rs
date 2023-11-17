@@ -11,15 +11,15 @@ pub trait CommandHandler {
     }
 }
 
-pub struct Cmdline {
-    prompt: String,
-    commands: HashMap<String, Box<dyn CommandHandler>>,
+pub struct Cmdline<'a> {
+    prompt: &'a str,
+    commands: HashMap<&'a str, Box<dyn CommandHandler>>,
 }
 
-impl Cmdline {
-    pub fn new() -> Cmdline {
+impl<'a> Cmdline<'a> {
+    pub fn new() -> Cmdline<'a> {
         let mut cmdline = Cmdline {
-            prompt: String::from(DEFAULT_PROMPT),
+            prompt: DEFAULT_PROMPT,
             commands: HashMap::new(),
         };
         cmdline.add_command("quit", Box::new(DefaultQuitCommand));
@@ -51,8 +51,7 @@ impl Cmdline {
             }
 
             let (cmd, line) = self.parse_command(&command_line);
-            let cmd = cmd.to_string();
-            if let Some(handler) = self.commands.get(&cmd) {
+            if let Some(handler) = self.commands.get(cmd) {
                 handler.execute(line);
             }
             else {
@@ -65,7 +64,7 @@ impl Cmdline {
         }
     }
 
-    
+
 
     /// Change the prompt of the cmd-like program
     ///
@@ -79,17 +78,17 @@ impl Cmdline {
     /// let mut cmd: rusty_cmd::Cmdline = rusty_cmd::Cmdline::new();
     /// cmd.change_prompt("[My New Prompt] # ");
     /// ```
-    pub fn change_prompt(&mut self, new_prompt: &str) {
-        self.prompt = String::from(new_prompt);
+    pub fn change_prompt(&mut self, new_prompt: &'a str) {
+        self.prompt = new_prompt;
     }
 
-    pub fn get_prompt<'a>(&'a self) -> &'a String {
-        &self.prompt
+    pub fn get_prompt(&self) -> &'a str {
+        self.prompt
     }
 
-    fn parse_command(&self, command_line: &str) -> (String, Option<String>) {
+    fn parse_command(&self, command_line: &'a str) -> (&'a str, Option<String>) {
         let mut tokens = command_line.split_whitespace();
-        let cmd: String = tokens.next().unwrap_or("").to_string();
+        let cmd: &str = tokens.next().unwrap_or("");
         let line: String = tokens.collect::<Vec<_>>().join(" ");
         let line: Option<String> = if line.is_empty() {
             None
@@ -99,11 +98,11 @@ impl Cmdline {
         (cmd, line)
     }
 
-    pub fn add_command(&mut self, name: &str, handler: Box<dyn CommandHandler>) {
+    pub fn add_command(&mut self, name: &'a str, handler: Box<dyn CommandHandler>) {
         if self.commands.get(name).is_some() {
             self.commands.remove(name);
         }
-        self.commands.insert(name.to_string(), handler);
+        self.commands.insert(name, handler);
     }
 
     fn help_command(&self) {
