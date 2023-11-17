@@ -8,8 +8,8 @@ impl CommandHandler for SimpleCommand {
         println!("Hello, this is Simple!");
     }
 
-    fn get_help_string(&self) -> String {
-        String::from("Greeting from Simple")
+    fn get_help_string<'a>(&self) -> &'a str {
+        "Greeting from Simple"
     }
 }
 

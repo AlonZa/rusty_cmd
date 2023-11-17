@@ -6,8 +6,8 @@ const DEFAULT_PROMPT: &str = "rusty_cmd $ ";
 
 pub trait CommandHandler {
     fn execute(&self, line: Option<String>);
-    fn get_help_string(&self) -> String {
-        String::from("No help here...")
+    fn get_help_string<'a>(&self) -> &'a str {
+        "No help here..."
     }
 }
 
@@ -128,7 +128,7 @@ impl CommandHandler for DefaultQuitCommand {
         exit(0);
     }
 
-    fn get_help_string(&self) -> String {
-        String::from("Quit with exit code 0")
+    fn get_help_string<'a>(&self) -> &'a str {
+        "Quit with exit code 0"
     }
 }
