@@ -31,7 +31,8 @@ impl<'a> CmdLoop<'a> {
         cmd_loop
     }
 
-        /// Run the main loop of the cmd-like program
+ 
+    /// Run the main loop of the cmd-like program
     ///
     /// # Examples
     ///
@@ -52,7 +53,7 @@ impl<'a> CmdLoop<'a> {
                 println!("");
                 continue;
             }
-            
+
             let (cmd, line) = self.parse_command(&command_line);
             if let Some(handler) = self.commands.get(cmd) {
                 handler.execute(line, &mut self.printer);
@@ -83,7 +84,7 @@ impl<'a> CmdLoop<'a> {
         self.prompt = new_prompt;
     }
 
-    pub fn get_prompt(&self) -> &str {
+    pub fn get_prompt(&self) -> &'a str {
         self.prompt
     }
 
