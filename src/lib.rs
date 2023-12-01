@@ -1,48 +1,51 @@
 use std::collections::HashMap;
-use std::io::{self, Write};
+use std::io::{self, stdout};
 use std::process::exit;
+
+pub mod printerterm;
+use printerterm::PrinterTerm;
 
 const DEFAULT_PROMPT: &str = "rusty_cmd $ ";
 
 pub trait CommandHandler {
-    fn execute(&self, line: Option<String>);
-    fn get_help_string(&self) -> String {
-        String::from("No help here...")
+    fn execute(&self, line: Option<String>, printer: &mut PrinterTerm);
+    fn get_help_string<'a>(&self) -> &'a str {
+        "No help here..."
     }
 }
 
-pub struct Cmdline {
-    prompt: String,
-    commands: HashMap<String, Box<dyn CommandHandler>>,
+pub struct CmdLoop<'a> {
+    printer: PrinterTerm,
+    prompt: &'a str,
+    commands: HashMap<&'a str, Box<dyn CommandHandler>>,
 }
 
-impl Cmdline {
-    pub fn new() -> Cmdline {
-        let mut cmdline = Cmdline {
-            prompt: String::from(DEFAULT_PROMPT),
+impl<'a> CmdLoop<'a> {
+    pub fn new() -> CmdLoop<'a> {
+        let mut cmd_loop = CmdLoop { 
+            printer: PrinterTerm::new(),
+            prompt: DEFAULT_PROMPT,
             commands: HashMap::new(),
         };
-        cmdline.add_command("quit", Box::new(DefaultQuitCommand));
-        cmdline
+        cmd_loop.add_command("quit", Box::new(DefaultQuitCommand));
+        cmd_loop
     }
 
-    /// Run the main loop of the cmd-like program
-    /// 
+        /// Run the main loop of the cmd-like program
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```no_run
     /// let mut cmd: rusty_cmd::Cmdline = rusty_cmd::Cmdline::new();
     /// cmd.cmdloop();
     /// ```
-    pub fn cmdloop(&self) -> Result<(), io::Error> {
+    pub fn cmdloop(&mut self) -> Result<(), io::Error> {
 
+        self.printer.gracefully_start();
         loop {
-            print!("{}", self.prompt);
-            io::stdout().flush()?;
+            self.printer.print_wrapped(&format!("{}", self.prompt));
 
-            let mut command_line: String = String::new();
-
-            io::stdin().read_line(&mut command_line)?;
+            let mut command_line: String = self.printer.read_input();
 
             let command_line: &str = command_line.trim();
             if command_line.is_empty() {
@@ -51,45 +54,42 @@ impl Cmdline {
             }
             
             let (cmd, line) = self.parse_command(&command_line);
-            let cmd = cmd.to_string();
-            if let Some(handler) = self.commands.get(&cmd) {
-                handler.execute(line);
+            if let Some(handler) = self.commands.get(cmd) {
+                handler.execute(line, &mut self.printer);
             }
             else {
                 if cmd.eq("help") {
                     self.help_command();
                     continue;
                 }
-                println!("Unknown command: {}", cmd);
+                self.printer.print_wrapped(&format!("Unknown command: {}", cmd));
             }
         }
     }
 
-    
-
     /// Change the prompt of the cmd-like program
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * new_prompt - A string slice that holds the new prompt.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// let mut cmd: rusty_cmd::Cmdline = rusty_cmd::Cmdline::new();
     /// cmd.change_prompt("[My New Prompt] # ");
     /// ```
-    pub fn change_prompt(&mut self, new_prompt: &str) {
-        self.prompt = String::from(new_prompt);
+    pub fn change_prompt(&mut self, new_prompt: &'a str) {
+        self.prompt = new_prompt;
     }
 
-    pub fn get_prompt(&self) -> String {
-        self.prompt.clone()
+    pub fn get_prompt(&self) -> &str {
+        self.prompt
     }
-    
-    fn parse_command(&self, command_line: &str) -> (String, Option<String>) {
+
+    fn parse_command(&self, command_line: &'a str) -> (&'a str, Option<String>) {
         let mut tokens = command_line.split_whitespace();
-        let cmd: String = tokens.next().unwrap_or("").to_string();
+        let cmd: &str = tokens.next().unwrap_or("");
         let line: String = tokens.collect::<Vec<_>>().join(" ");
         let line: Option<String> = if line.is_empty() {
             None
@@ -99,37 +99,43 @@ impl Cmdline {
         (cmd, line)
     }
 
-    pub fn add_command(&mut self, name: &str, handler: Box<dyn CommandHandler>) {
+    pub fn add_command(&mut self, name: &'a str, handler: Box<dyn CommandHandler>) {
         if self.commands.get(name).is_some() {
             self.commands.remove(name);
         }
-        self.commands.insert(name.to_string(), handler);
+        self.commands.insert(name, handler);
     }
 
-    fn help_command(&self) {
+    fn help_command(&mut self) {
         if self.commands.get("help").is_none() {
-            println!("help:\n\tThis help menu")
+            self.printer.print_wrapped("help:\n\tThis help menu")
         }
-        for command in &self.commands {
-            print!("{}:\n", command.0);
+        
+        let commands = std::mem::take(&mut self.commands);
+        for command in &commands {
+            self.printer.print_wrapped(&format!("{}:\n", command.0));
             let lines = command.1.get_help_string();
             let lines = lines.split('\n');
             for line in lines {
-                println!("\t{}", line);
+                self.printer.print_wrapped(&format!("\t{}", line));
             }
         }
+        self.printer.update_cursor(printerterm::Direction::Down(1));
+        self.commands = commands;
     }
-
 }
+
 
 struct DefaultQuitCommand;
 impl CommandHandler for DefaultQuitCommand {
-    fn execute(&self, _line: Option<String>) {
-        println!("Quitting...");
-        exit(0);
+    fn execute(&self, _line: Option<String>, cmd_printer: &mut PrinterTerm) {
+        cmd_printer.print_wrapped("Quitting...");
+        
+        // Gracefully exit
+        cmd_printer.gracefully_quit();
     }
 
-    fn get_help_string(&self) -> String {
-        String::from("Quit with exit code 0")
+    fn get_help_string<'a>(&self) -> &'a str {
+        "Quit with exit code 0"
     }
 }
