@@ -12,10 +12,9 @@ impl CommandHandler for SimpleCommand {
     }
 }
 
-//  rustc SimpleCommand.rs --extern rusty_cmd=../target/debug/librusty_cmd.rlib
 fn main() {
     let mut cmd: rusty_cmd::CmdLoop = rusty_cmd::CmdLoop::new();
     cmd.change_prompt("[Simple]# ");
     cmd.add_command("simple", Box::new(SimpleCommand));
-    let _ = cmd.cmdloop();
+    cmd.cmdloop();
 }

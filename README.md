@@ -11,7 +11,11 @@ Run a loop that each iteration will parse a command-line, and than run the comma
 ### Custom Command Prompt
 Ability to customize the command prompt to fit the interpreter needs.
 
+## Limitations
+* When adding new commands, it is mandatory to use `CmdLoop.printer.print_wrapped()`
+
 ## Future Work
+- [ ] Add Scrolling option
 - [ ] Add keyboard interrupt handler
 - [x] Add default `quit` and `help` commands
 - [ ] Add `pre-loop` and `post-loop` functions as a trait, with default implementation
