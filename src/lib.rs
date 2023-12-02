@@ -3,6 +3,7 @@ use std::io::{self, stdout};
 use std::process::exit;
 
 pub mod printerterm;
+use crossterm::style::Stylize;
 use printerterm::PrinterTerm;
 
 const DEFAULT_PROMPT: &str = "rusty_cmd $ ";
@@ -44,9 +45,9 @@ impl<'a> CmdLoop<'a> {
 
         self.printer.gracefully_start();
         loop {
-            self.printer.print_wrapped(&format!("{}", self.prompt));
+            self.printer.colored_styled_print(&format!("{}", self.prompt).bold(), crossterm::style::Color::Green);
 
-            let mut command_line: String = self.printer.read_input();
+            let command_line: String = self.printer.read_input();
 
             let command_line: &str = command_line.trim();
             if command_line.is_empty() {

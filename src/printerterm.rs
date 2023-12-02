@@ -5,7 +5,7 @@ use crossterm::cursor::{MoveTo, MoveToColumn};
 use crossterm::event::{
     poll, KeyboardEnhancementFlags, PopKeyboardEnhancementFlags, PushKeyboardEnhancementFlags,
 };
-use crossterm::style::{Print, self};
+use crossterm::style::{Print, Color, StyledContent, Stylize};
 use crossterm::terminal::{ClearType, Clear};
 use crossterm::{
     event::{
@@ -80,7 +80,7 @@ impl PrinterTerm {
                     self.line_buffer.remove(self.buffer_idx as usize);
                     execute!(stdout(), Clear(ClearType::CurrentLine)).unwrap();
                     execute!(stdout(), MoveToColumn(0)).unwrap();
-                    execute!(stdout(), Print(format!("{}", self.line_buffer))).unwrap();
+                    execute!(stdout(), Print(format!("{}", self.line_buffer).bold())).unwrap();
                     self.update_cursor(Direction::Left);
                 }
                 else {
@@ -117,7 +117,7 @@ impl PrinterTerm {
                     KeyCode::Char(c) => {
                         self.line_buffer.insert(self.buffer_idx as usize, c);
                         self.buffer_idx += 1;
-                        execute!(stdout(), Print(format!("{}", &self.line_buffer.as_str()[self.buffer_idx as usize - 1..]))).unwrap();
+                        execute!(stdout(), Print(format!("{}", &self.line_buffer.as_str()[self.buffer_idx as usize - 1..]).bold())).unwrap();
                         self.update_cursor(Direction::Right);
                     }
                     _ => {}
@@ -127,10 +127,29 @@ impl PrinterTerm {
     }
 
     pub fn print_wrapped(&mut self, text: &str){
-        self.cursor.1 += 1;
+        // self.cursor.1 += 1;
         execute!(stdout(), MoveTo(self.cursor.0, self.cursor.1)).unwrap();
         execute!(stdout(), Print(text)).unwrap();
         self.update_cursor(Direction::Down(text.len() as u16));
+    }
+
+    pub fn styled_print_wrapped(&mut self, text: &StyledContent<String>){
+        // self.cursor.1 += 1;
+        execute!(stdout(), MoveTo(self.cursor.0, self.cursor.1)).unwrap();
+        execute!(stdout(), Print(text)).unwrap();
+        self.update_cursor(Direction::Down(text.to_string().len() as u16));
+    }
+
+    pub fn colored_print(&mut self, text: &str, color: crossterm::style::Color) {
+        execute!(stdout(), crossterm::style::SetForegroundColor(color)).unwrap();
+        self.print_wrapped(text);
+        execute!(stdout(), crossterm::style::SetForegroundColor(crossterm::style::Color::Reset)).unwrap();
+    }
+
+    pub fn colored_styled_print(&mut self, text: &StyledContent<String>, color: crossterm::style::Color) {
+        execute!(stdout(), crossterm::style::SetForegroundColor(color)).unwrap();
+        self.styled_print_wrapped(text);
+        execute!(stdout(), crossterm::style::SetForegroundColor(crossterm::style::Color::Reset)).unwrap();
     }
 
     fn update_cursor_no_move(&mut self, direction: Direction) {
